@@ -100,6 +100,34 @@ Passwords are hashed with BCrypt; tokens are signed JWTs (HMAC).
 | `frontend/`| `npm run build`             | Type-check + production build     |
 | `frontend/`| `npm run lint`              | Lint the frontend                |
 
+## Connecting a hosted landing page (e.g. Figma Sites)
+
+A published marketing page (Figma Sites, Framer, Webflow, etc.) is a **separate
+static site**. It can't run this React app or the Spring Boot backend and can't
+share a login session with them — the only integration point is a **link**.
+
+To hand off from the landing page to this app:
+
+1. **Deploy the three pieces** so they're reachable on the public internet
+   (localhost won't work for real visitors):
+   - Frontend (`frontend/`, `npm run build`) → any static host (Vercel,
+     Netlify, Cloudflare Pages). Set `VITE_API_BASE_URL` to the backend URL at
+     build time.
+   - Backend (`backend/`, `./mvnw package` → runnable jar) → a JVM host
+     (Render, Railway, Fly.io, etc.). Set `JWT_SECRET`, the `DATABASE_*`
+     variables (your Supabase connection), and `CORS_ALLOWED_ORIGINS` to the
+     deployed **frontend** origin.
+   - Database → Supabase (managed PostgreSQL).
+2. **Point the landing page's "Sign in" / "Sign up" / CTA button** at the
+   deployed frontend's login route, e.g. `https://app.yourdomain.com/login`
+   (in Figma Sites: select the element → set its link/interaction to *Open
+   link* → your URL). After a successful login the app routes the user to
+   `/business` automatically.
+
+`VITE_API_BASE_URL` is what lets the statically-hosted frontend call the
+deployed backend directly (it defaults to empty for local dev, which uses the
+Vite proxy instead). See `frontend/.env.example`.
+
 ## Cloud Agent environment
 
 `.cursor/environment.json` installs PostgreSQL + dependencies

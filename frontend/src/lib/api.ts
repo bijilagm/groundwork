@@ -32,8 +32,14 @@ export class ApiError extends Error {
   }
 }
 
+// In development this is empty, so requests are relative (e.g. "/auth/login")
+// and the Vite dev server proxies them to the backend. In production the
+// frontend is served as static files, so point it at the deployed backend by
+// setting VITE_API_BASE_URL (e.g. "https://api.yourdomain.com").
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
 async function request<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
