@@ -1,0 +1,33 @@
+{
+  "name": "groundwork",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Groundwork - a full-stack TypeScript starter (Express API + Vite/React UI).",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm --workspace server run dev",
+    "dev:web": "npm --workspace client run dev",
+    "build": "npm --workspace server run build && npm --workspace client run build",
+    "start": "npm --workspace server run start",
+    "lint": "eslint .",
+    "typecheck": "npm --workspace server run typecheck && npm --workspace client run typecheck",
+    "test": "npm --workspace server run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.13.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.11.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.11.0"
+  }
+}
