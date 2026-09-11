@@ -1,0 +1,28 @@
+# Render Blueprint for the Groundwork backend (Spring Boot).
+# Create it via Render Dashboard → New → Blueprint, pointing at this repo.
+# The database is Supabase (external), configured through the env vars below.
+services:
+  - type: web
+    name: groundwork-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      # Auto-generated strong secret for signing JWTs.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MS
+        value: "86400000"
+      # Supabase connection — set these in the Render dashboard (not committed).
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      # The deployed Vercel frontend origin, e.g. https://groundwork.vercel.app
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false

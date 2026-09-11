@@ -1,0 +1,25 @@
+{
+  "name": "Groundwork",
+  "install": "bash scripts/cloud-install.sh",
+  "start": "bash scripts/cloud-start.sh",
+  "terminals": [
+    {
+      "name": "backend",
+      "command": "cd backend && ./mvnw -B spring-boot:run"
+    },
+    {
+      "name": "frontend",
+      "command": "npm --prefix frontend run dev"
+    }
+  ],
+  "ports": [
+    {
+      "name": "frontend",
+      "port": 5173
+    },
+    {
+      "name": "backend",
+      "port": 8080
+    }
+  ]
+}
