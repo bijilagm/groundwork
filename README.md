@@ -128,6 +128,53 @@ To hand off from the landing page to this app:
 deployed backend directly (it defaults to empty for local dev, which uses the
 Vite proxy instead). See `frontend/.env.example`.
 
+## Deployment (Vercel + Render + Supabase)
+
+Deploy order: **Supabase → Render (backend) → Vercel (frontend) → link the landing page.**
+
+### 1. Supabase (database)
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **Project Settings → Database → Connection string** and use the
+   **Session pooler** (port `5432`) — it's IPv4 and works well with a
+   long-running JVM server. You'll get values like:
+   - Host: `aws-0-<region>.pooler.supabase.com`
+   - Port: `5432`
+   - User: `postgres.<project-ref>`
+   - Password: your database password
+3. The backend needs these as:
+   - `DATABASE_URL` = `jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require`
+   - `DATABASE_USERNAME` = `postgres.<project-ref>`
+   - `DATABASE_PASSWORD` = your database password
+
+   Tables are created automatically on first boot (`ddl-auto=update`).
+
+### 2. Render (backend)
+This repo ships a [`render.yaml`](./render.yaml) Blueprint and a
+[`backend/Dockerfile`](./backend/Dockerfile).
+1. Render Dashboard → **New → Blueprint** → connect this repo.
+2. Render builds `backend/Dockerfile`. `JWT_SECRET` is auto-generated; set the
+   rest in the dashboard:
+   - `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` (from Supabase)
+   - `CORS_ALLOWED_ORIGINS` = your Vercel URL (e.g. `https://groundwork.vercel.app`)
+3. Render injects `PORT` automatically (the app already binds to it). Health
+   check: `/actuator/health`. Note the service URL, e.g.
+   `https://groundwork-backend.onrender.com`.
+
+### 3. Vercel (frontend)
+This repo ships [`frontend/vercel.json`](./frontend/vercel.json) (Vite + SPA
+rewrites so `/login`, `/business`, etc. work on refresh).
+1. Vercel → **New Project** → import this repo.
+2. Set **Root Directory** = `frontend`.
+3. Add env var `VITE_API_BASE_URL` = your Render URL
+   (e.g. `https://groundwork-backend.onrender.com`).
+4. Deploy. Note the URL, e.g. `https://groundwork.vercel.app`, and make sure it
+   matches `CORS_ALLOWED_ORIGINS` on Render.
+
+### 4. Link the landing page
+In your Figma Sites (or other) landing page, set the **Sign in / Sign up / CTA**
+button's link to `https://groundwork.vercel.app/login`. After login the app
+routes users to `/business`.
+
 ## Cloud Agent environment
 
 `.cursor/environment.json` installs PostgreSQL + dependencies
