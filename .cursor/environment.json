@@ -1,24 +1,25 @@
 {
   "name": "Groundwork",
-  "install": "npm ci",
+  "install": "bash scripts/cloud-install.sh",
+  "start": "bash scripts/cloud-start.sh",
   "terminals": [
     {
-      "name": "api",
-      "command": "npm run dev:api"
+      "name": "backend",
+      "command": "cd backend && ./mvnw -B spring-boot:run"
     },
     {
-      "name": "web",
-      "command": "npm run dev:web"
+      "name": "frontend",
+      "command": "npm --prefix frontend run dev"
     }
   ],
   "ports": [
     {
-      "name": "web",
+      "name": "frontend",
       "port": 5173
     },
     {
-      "name": "api",
-      "port": 4000
+      "name": "backend",
+      "port": 8080
     }
   ]
 }

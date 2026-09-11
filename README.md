@@ -1,58 +1,108 @@
-# groundwork
+# Groundwork
 
-A full-stack TypeScript starter: an Express + TypeScript REST API and a Vite +
-React + TypeScript UI, wired together with npm workspaces.
+Groundwork turns a short business assessment into a clear, prioritized
+**opportunity map**. This repository holds the full product:
+
+- **Frontend** — React + TypeScript + Tailwind CSS (Vite), with React Router.
+- **Backend** — Java Spring Boot REST API with JWT authentication.
+- **Database** — PostgreSQL (Supabase in production; local PostgreSQL for dev).
+
+## Application flow
+
+```
+Landing Page → Start Assessment → Login / Sign Up → Tell Me About Your Business → Opportunity Map
+```
+
+- `/` — Landing page. **Start Assessment** navigates to the login page.
+- `/login` — Login / Sign Up (JWT auth). On success, navigates to the business page.
+- `/business` — "Tell Me About Your Business" (protected).
+- `/opportunity-map` — Opportunity Map results (protected).
 
 ## Layout
 
-| Path      | Description                                            |
-| --------- | ------------------------------------------------------ |
-| `server/` | Express REST API (`/api/tasks`, `/api/health`)         |
-| `client/` | Vite + React UI that talks to the API through `/api`   |
+| Path        | Description                                             |
+| ----------- | ------------------------------------------------------- |
+| `frontend/` | React + TS + Tailwind app (Vite, React Router)          |
+| `backend/`  | Spring Boot API (`/auth/register`, `/auth/login`, JWT)  |
+| `scripts/`  | Cloud Agent environment install/start scripts           |
 
 ## Prerequisites
 
-- Node.js `>=20` (Node 22 recommended)
-- npm `>=10`
+- Node.js `>=20` and npm `>=10`
+- Java `21`
+- PostgreSQL `>=14` (local) or a Supabase connection string
 
 ## Getting started
 
-```bash
-npm ci        # install all workspace dependencies
-npm run dev   # start the API (:4000) and the web app (:5173) together
+### 1. Database
+
+Create a local database and role (defaults the backend expects):
+
+```sql
+CREATE ROLE groundwork LOGIN PASSWORD 'groundwork';
+CREATE DATABASE groundwork OWNER groundwork;
 ```
 
-Then open http://localhost:5173. The Vite dev server proxies `/api` to the
-API on port `4000`, so the two run side by side with no extra config.
+### 2. Backend (port 8080)
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+Configuration is environment-driven (see `backend/src/main/resources/application.yml`):
+
+| Variable              | Default                                              |
+| --------------------- | ---------------------------------------------------- |
+| `DATABASE_URL`        | `jdbc:postgresql://localhost:5432/groundwork`        |
+| `DATABASE_USERNAME`   | `groundwork`                                          |
+| `DATABASE_PASSWORD`   | `groundwork`                                          |
+| `JWT_SECRET`          | dev-only default (**override in every real env**)     |
+| `JWT_EXPIRATION_MS`   | `86400000` (24h)                                     |
+| `CORS_ALLOWED_ORIGINS`| `http://localhost:5173`                              |
+
+To use **Supabase**, set `DATABASE_URL`/`DATABASE_USERNAME`/`DATABASE_PASSWORD`
+to your Supabase Postgres connection details.
+
+### 3. Frontend (port 5173)
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+The Vite dev server proxies `/auth` and `/api` to the backend on port `8080`,
+so no CORS setup is needed in development.
+
+## Auth API
+
+| Method | Route            | Body                                        | Success |
+| ------ | ---------------- | ------------------------------------------- | ------- |
+| `POST` | `/auth/register` | `firstName, lastName, email, password`      | `201` + `{ token, id, firstName, lastName, email }` |
+| `POST` | `/auth/login`    | `email, password`                           | `200` + `{ token, ... }` |
+
+Passwords are hashed with BCrypt; tokens are signed JWTs (HMAC).
+
+### User entity
+
+`id` (UUID), `firstName`, `lastName`, `email` (unique), `password` (hashed),
+`createdAt`.
 
 ## Common commands
 
-| Command             | What it does                                      |
-| ------------------- | ------------------------------------------------- |
-| `npm run dev`       | Run the API and web dev servers concurrently      |
-| `npm run dev:api`   | Run only the API dev server (watch mode)          |
-| `npm run dev:web`   | Run only the web dev server                       |
-| `npm run build`     | Type-check + build the server and client          |
-| `npm run start`     | Run the compiled API from `server/dist`           |
-| `npm run lint`      | Lint the whole workspace with ESLint              |
-| `npm run typecheck` | Type-check the server and client                  |
-| `npm test`          | Run the server test suite (Vitest + Supertest)    |
-
-## API
-
-| Method   | Route             | Description               |
-| -------- | ----------------- | ------------------------- |
-| `GET`    | `/api/health`     | Liveness check            |
-| `GET`    | `/api/tasks`      | List tasks                |
-| `POST`   | `/api/tasks`      | Create a task             |
-| `PATCH`  | `/api/tasks/:id`  | Update a task title/state |
-| `DELETE` | `/api/tasks/:id`  | Delete a task             |
-
-Tasks are held in memory to keep the starter dependency-free; swap
-`server/src/tasks.ts` for a real database when you need persistence.
+| Location   | Command                     | What it does                     |
+| ---------- | --------------------------- | -------------------------------- |
+| `backend/` | `./mvnw test`               | Run the backend test suite       |
+| `backend/` | `./mvnw spring-boot:run`    | Run the API                      |
+| `backend/` | `./mvnw package`            | Build the executable jar         |
+| `frontend/`| `npm run dev`               | Run the Vite dev server          |
+| `frontend/`| `npm run build`             | Type-check + production build     |
+| `frontend/`| `npm run lint`              | Lint the frontend                |
 
 ## Cloud Agent environment
 
-`.cursor/environment.json` installs dependencies with `npm ci` and launches the
-`api` and `web` dev servers as persistent terminals, exposing ports `4000` and
-`5173`.
+`.cursor/environment.json` installs PostgreSQL + dependencies
+(`scripts/cloud-install.sh`), ensures PostgreSQL and the `groundwork` database
+are ready on each boot (`scripts/cloud-start.sh`), and runs the `backend`
+(:8080) and `frontend` (:5173) dev servers as persistent terminals.

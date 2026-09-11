@@ -1,9 +1,13 @@
+# Node / frontend
 node_modules/
 dist/
-build/
-coverage/
+.vite/
+
+# Java / backend
+target/
+
+# Env & logs
 *.log
-.DS_Store
 .env
 .env.local
-.vite/
+.DS_Store
